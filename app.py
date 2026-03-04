@@ -120,13 +120,20 @@ def build_prompt_optimizer_examples() -> List[dspy.Example]:
 
 def train_teleprompted_optimizer() -> TelepromptedOptimizer:
     trainset = build_prompt_optimizer_examples()
+    
+    # 1. Create the 'Student' (the un-trained version of your module)
+    student = dspy.Predict(PromptOptimizeSignature)
 
+    # 2. Setup the Teleprompter
+    # We use a simple metric (like dspy.evaluate.answer_exact_match) or just the signature
     teleprompter = dspy.BootstrapFewShot(
-        PromptOptimizeSignature,
-        max_bootstrapped_demos=8,
+        metric=None, # For simple prompt optimization, you can often leave this None
+        max_bootstrapped_demos=4, # Start small (4) to ensure it deploys quickly on Render
     )
 
-    trained_program = teleprompter.compile(trainset=trainset)
+    # 3. Compile the Student using the training set
+    trained_program = teleprompter.compile(student, trainset=trainset) 
+    
     return TelepromptedOptimizer(trained_program)
 
 
